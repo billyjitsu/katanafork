@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-katana-50: #f0fdf4;
+  --color-katana-100: #dcfce7;
+  --color-katana-500: #22c55e;
+  --color-katana-600: #16a34a;
+  --color-katana-700: #15803d;
+  --color-katana-800: #166534;
+  --color-katana-900: #14532d;
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-950 text-zinc-100 antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-zinc-900 border border-zinc-800 rounded-xl p-6;
+  }
+
+  .btn-primary {
+    @apply bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 px-5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2.5 px-5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-500 text-white font-medium py-2.5 px-5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .input-field {
+    @apply w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent;
+  }
+
+  .label-text {
+    @apply block text-sm font-medium text-zinc-400 mb-1.5;
+  }
+}

@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+foundry/out/
+foundry/cache/
+foundry/lib/
+foundry/.anvil.pid
+foundry/.anvil.log
+.env
+.env.local
+*.log
+.DS_Store
+.claude/
