@@ -8,6 +8,7 @@ import { Overview } from "@/components/Overview";
 import { StakeKAT } from "@/components/StakeKAT";
 import { DepositAvKAT } from "@/components/DepositAvKAT";
 import { ConvertTokens } from "@/components/ConvertTokens";
+import { MergeVKAT } from "@/components/MergeVKAT";
 import { UnstakeVKAT } from "@/components/UnstakeVKAT";
 import { VoteOnGauges } from "@/components/VoteOnGauges";
 
@@ -16,6 +17,7 @@ const tabs = [
   { id: "stake", label: "vKAT" },
   { id: "vault", label: "avKAT" },
   { id: "convert", label: "Convert" },
+  { id: "merge", label: "Merge" },
   { id: "unstake", label: "Unstake" },
   { id: "vote", label: "Vote" },
 ] as const;
@@ -99,6 +101,7 @@ export default function Home() {
               {activeTab === "stake" && <StakeKAT />}
               {activeTab === "vault" && <DepositAvKAT />}
               {activeTab === "convert" && <ConvertTokens />}
+              {activeTab === "merge" && <MergeVKAT />}
               {activeTab === "unstake" && <UnstakeVKAT />}
               {activeTab === "vote" && <VoteOnGauges />}
             </div>
