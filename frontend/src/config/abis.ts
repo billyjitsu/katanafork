@@ -138,6 +138,16 @@ export const votingEscrowAbi = [
   },
   {
     type: "function",
+    name: "merge",
+    inputs: [
+      { name: "from", type: "uint256" },
+      { name: "to", type: "uint256" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "lastLockId",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],

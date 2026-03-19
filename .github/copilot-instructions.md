@@ -26,3 +26,4 @@ This is a local Anvil fork testing environment for the KAT ecosystem on Katana N
 - After beginWithdrawal, NFT transfers to escrow — query `ExitQueue.queue(tokenId)` for pending state
 - Gauge voting needs self-delegation first: `IVotesAdapter.delegate(yourAddress)`
 - DAO is mocked on fork (always returns true) — not suitable for permission testing
+- `merge(from, to)` does NOT need NFT approval — works across epochs, while voting. Source can't be in exit queue
