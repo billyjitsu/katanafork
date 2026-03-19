@@ -8,17 +8,20 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { parseEther, formatEther } from "viem";
+import { fmtEther } from "@/lib/format";
 import { CONTRACTS } from "@/config/contracts";
 import {
   votingEscrowAbi,
   avkatVaultAbi,
   nftLockAbi,
+  exitQueueAbi,
 } from "@/config/abis";
+import { TxError } from "./TxError";
 
 export function ConvertTokens() {
   return (
     <div className="max-w-2xl mx-auto space-y-8">
-      <h2 className="text-2xl font-bold text-zinc-100">Convert Tokens</h2>
+      <h2 className="text-2xl font-bold text-ink-100">Convert Tokens</h2>
       <VkatToAvkat />
       <AvkatToVkat />
     </div>
@@ -49,6 +52,7 @@ function VkatToAvkat() {
     writeContract: setApproval,
     data: approvalTxHash,
     isPending: isApprovePending,
+    error: approvalError,
     reset: resetApproval,
   } = useWriteContract();
 
@@ -61,6 +65,7 @@ function VkatToAvkat() {
     writeContract: depositTokenId,
     data: depositTxHash,
     isPending: isDepositPending,
+    error: depositError,
     reset: resetDeposit,
   } = useWriteContract();
 
@@ -103,10 +108,10 @@ function VkatToAvkat() {
   return (
     <div className="card space-y-5">
       <div>
-        <h3 className="text-lg font-semibold text-zinc-200">
+        <h3 className="text-lg font-semibold text-ink-200">
           vKAT NFT to avKAT
         </h3>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-ink-400 mt-1">
           Convert your vKAT NFT into liquid avKAT vault shares.
         </p>
       </div>
@@ -126,11 +131,14 @@ function VkatToAvkat() {
           ))}
         </select>
         {tokenIds.length === 0 && (
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-ink-400 mt-1">
             No vKAT NFTs found in your wallet.
           </p>
         )}
       </div>
+
+      <TxError error={approvalError} />
+      <TxError error={depositError} />
 
       {!isApprovedForAll ? (
         <button
@@ -181,6 +189,13 @@ function AvkatToVkat() {
   const { address } = useAccount();
   const [shares, setShares] = useState("");
 
+  const { data: onChainCooldown } = useReadContract({
+    address: CONTRACTS.EXIT_QUEUE,
+    abi: exitQueueAbi,
+    functionName: "cooldown",
+  });
+  const cooldownDays = onChainCooldown !== undefined ? Math.round(Number(onChainCooldown) / 86400) : "...";
+
   const { data: avkatBalance } = useReadContract({
     address: CONTRACTS.AVKAT_VAULT,
     abi: avkatVaultAbi,
@@ -203,6 +218,7 @@ function AvkatToVkat() {
     writeContract: withdrawTokenId,
     data: withdrawTxHash,
     isPending: isWithdrawPending,
+    error: withdrawError,
     reset: resetWithdraw,
   } = useWriteContract();
 
@@ -227,10 +243,10 @@ function AvkatToVkat() {
   return (
     <div className="card space-y-5">
       <div>
-        <h3 className="text-lg font-semibold text-zinc-200">
+        <h3 className="text-lg font-semibold text-ink-200">
           avKAT to vKAT NFT
         </h3>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-ink-400 mt-1">
           Redeem avKAT shares to receive a new vKAT NFT.
         </p>
       </div>
@@ -249,34 +265,36 @@ function AvkatToVkat() {
             onClick={() =>
               avkatBalance && setShares(formatEther(avkatBalance))
             }
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-500 hover:text-emerald-400 font-medium"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-katana-500 hover:text-katana-400 font-medium"
           >
             MAX
           </button>
         </div>
-        <p className="text-xs text-zinc-500 mt-1">
+        <p className="text-xs text-ink-400 mt-1">
           Balance:{" "}
-          {avkatBalance !== undefined ? formatEther(avkatBalance) : "--"} avKAT
+          {avkatBalance !== undefined ? fmtEther(avkatBalance) : "--"} avKAT
         </p>
       </div>
 
       {assetsOut !== undefined && parsedShares > 0n && (
-        <div className="bg-zinc-800/50 rounded-lg p-3">
-          <p className="text-sm text-zinc-400">
+        <div className="bg-ink-800/50 rounded-lg p-3">
+          <p className="text-sm text-ink-400">
             Underlying value:{" "}
-            <span className="text-zinc-200 font-medium">
-              {formatEther(assetsOut)} KAT
+            <span className="text-ink-200 font-medium">
+              {fmtEther(assetsOut)} KAT
             </span>
           </p>
         </div>
       )}
 
-      <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3">
-        <p className="text-sm text-zinc-400">
+      <div className="bg-ink-800/50 border border-ink-600/30 rounded-lg p-3">
+        <p className="text-sm text-ink-400">
           You will receive a vKAT NFT. To convert back to KAT, you must begin
-          an unstake from the Unstake tab (45-day cooldown).
+          an unstake from the Unstake tab ({cooldownDays}-day cooldown).
         </p>
       </div>
+
+      <TxError error={withdrawError} />
 
       <button
         onClick={handleWithdraw}

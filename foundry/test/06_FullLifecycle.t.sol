@@ -14,11 +14,11 @@ contract FullLifecycleTest is KatanaForkTest {
         uint256 tokenId = escrow.createLock(2_000 ether);
         vm.stopPrank();
 
-        _advanceBlock();
+        _advancePastMinLock();
 
         vm.startPrank(alice);
         escrow.beginWithdrawal(tokenId);
-        vm.warp(block.timestamp + 45 days + 1);
+        vm.warp(block.timestamp + 60 days + 1);
         vm.roll(block.number + 1);
 
         uint256 katBefore = kat.balanceOf(alice);

@@ -14,13 +14,13 @@ contract UnstakeVKATTest is KatanaForkTest {
         uint256 tokenId = escrow.createLock(STAKE_AMOUNT);
         vm.stopPrank();
 
-        _advanceBlock();
+        _advancePastMinLock();
 
         vm.startPrank(alice);
         uint256 katBefore = kat.balanceOf(alice);
         escrow.beginWithdrawal(tokenId);
 
-        vm.warp(block.timestamp + 45 days + 1);
+        vm.warp(block.timestamp + 60 days + 1);
         vm.roll(block.number + 1);
 
         escrow.withdraw(tokenId);
@@ -36,7 +36,7 @@ contract UnstakeVKATTest is KatanaForkTest {
         uint256 tokenId = escrow.createLock(STAKE_AMOUNT);
         vm.stopPrank();
 
-        _advanceBlock();
+        _advancePastMinLock();
 
         vm.startPrank(alice);
         uint256 katBefore = kat.balanceOf(alice);
@@ -49,7 +49,7 @@ contract UnstakeVKATTest is KatanaForkTest {
         vm.stopPrank();
 
         uint256 received = kat.balanceOf(alice) - katBefore;
-        assertTrue(received >= 700 ether && received <= 800 ether, "Should receive ~75%");
+        assertTrue(received >= 150 ether && received <= 250 ether, "Should receive ~20% (80% max fee)");
     }
 
     function test_earlyWithdrawal() public {
@@ -58,7 +58,7 @@ contract UnstakeVKATTest is KatanaForkTest {
         uint256 tokenId = escrow.createLock(STAKE_AMOUNT);
         vm.stopPrank();
 
-        _advanceBlock();
+        _advancePastMinLock();
 
         vm.startPrank(alice);
         uint256 katBefore = kat.balanceOf(alice);
@@ -71,7 +71,7 @@ contract UnstakeVKATTest is KatanaForkTest {
         vm.stopPrank();
 
         uint256 received = kat.balanceOf(alice) - katBefore;
-        assertTrue(received > 750 ether && received < 975 ether, "Fee should be partial");
+        assertTrue(received > 300 ether && received < 500 ether, "Fee should be partial");
     }
 
     function test_cancelWithdrawal() public {
@@ -80,7 +80,7 @@ contract UnstakeVKATTest is KatanaForkTest {
         uint256 tokenId = escrow.createLock(STAKE_AMOUNT);
         vm.stopPrank();
 
-        _advanceBlock();
+        _advancePastMinLock();
 
         vm.startPrank(alice);
         escrow.beginWithdrawal(tokenId);

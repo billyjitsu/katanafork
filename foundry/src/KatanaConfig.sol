@@ -6,7 +6,6 @@ pragma solidity ^0.8.24;
 library KatanaConfig {
     // ─── Fork Blocks ──────────────────────────────────────
     uint256 internal constant EARLY_BLOCK = 23_368_900;
-    uint256 internal constant LATEST_BLOCK = 25_217_547;
 
     // ─── RPC ──────────────────────────────────────────────
     string internal constant RPC_URL = "https://rpc.katana.network";
@@ -27,8 +26,8 @@ library KatanaConfig {
     address internal constant ESCROW_IVOTES_ADAPTER = 0xB67Ac05e2C1d8592692a90BF61712274b988f25A;
 
     // ─── Constants ────────────────────────────────────────
-    uint256 internal constant COOLDOWN_PERIOD = 45 days;
+    uint256 internal constant COOLDOWN_PERIOD = 60 days;
     uint256 internal constant MIN_FEE_BPS = 250;   // 2.5%
-    uint256 internal constant MAX_FEE_BPS = 2500;  // 25%
+    uint256 internal constant MAX_FEE_BPS = 8000;  // 80%
     uint256 internal constant BPS_DENOMINATOR = 10_000;
 }

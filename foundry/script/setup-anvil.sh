@@ -33,41 +33,42 @@ echo "  RPC: $RPC"
 echo "========================================="
 echo ""
 
-echo "[1/10] Warping time past KAT unlock..."
-UNLOCK_TIME=$(cast call $KAT "unlockTime()(uint256)" --rpc-url $RPC | awk '{print $1}')
-CURRENT_TIME=$(cast block latest --field timestamp --rpc-url $RPC | awk '{print $1}')
-if [ "$CURRENT_TIME" -lt "$((UNLOCK_TIME + 1))" ]; then
-  TARGET_TIME=$((UNLOCK_TIME + 1))
-  cast rpc evm_setNextBlockTimestamp $(printf '0x%x' $TARGET_TIME) --rpc-url $RPC > /dev/null
-  cast rpc evm_mine --rpc-url $RPC > /dev/null
-  echo "       Timestamp set to $TARGET_TIME (unlockTime was $UNLOCK_TIME)"
+echo "[1/7] Verifying KAT is unlocked on-chain..."
+IS_UNLOCKED=$(cast call $KAT "isUnlocked()(bool)" --rpc-url $RPC)
+if [ "$IS_UNLOCKED" = "true" ]; then
+  echo "       KAT already unlocked — no warp or unlock needed"
 else
-  echo "       Already past unlockTime ($CURRENT_TIME > $UNLOCK_TIME)"
+  echo "       KAT still locked — falling back to legacy unlock..."
+  UNLOCK_TIME=$(cast call $KAT "unlockTime()(uint256)" --rpc-url $RPC | awk '{print $1}')
+  CURRENT_TIME=$(cast block latest --field timestamp --rpc-url $RPC | awk '{print $1}')
+  if [ "$CURRENT_TIME" -lt "$((UNLOCK_TIME + 1))" ]; then
+    TARGET_TIME=$((UNLOCK_TIME + 1))
+    cast rpc evm_setNextBlockTimestamp $(printf '0x%x' $TARGET_TIME) --rpc-url $RPC > /dev/null
+    cast rpc evm_mine --rpc-url $RPC > /dev/null
+  fi
+  cast rpc anvil_setBalance $UNLOCKER 0xDE0B6B3A7640000 --rpc-url $RPC > /dev/null
+  cast send $KAT "unlockAndRenounceUnlocker()" \
+    --from $UNLOCKER --unlocked --rpc-url $RPC > /dev/null
+  echo "       KAT unlocked via legacy path"
 fi
 
-echo "[2/10] Unlocking KAT transfers..."
-cast rpc anvil_setBalance $UNLOCKER 0xDE0B6B3A7640000 --rpc-url $RPC > /dev/null
-cast send $KAT "unlockAndRenounceUnlocker()" \
-  --from $UNLOCKER --unlocked --rpc-url $RPC > /dev/null
-echo "       KAT is now transferable"
+echo "[2/7] Ensuring contracts are unpaused..."
+ESCROW_PAUSED=$(cast call $ESCROW "paused()(bool)" --rpc-url $RPC)
+if [ "$ESCROW_PAUSED" = "false" ]; then
+  echo "       Contracts already unpaused — skipping storage overrides"
+else
+  cast rpc anvil_setStorageAt $ESCROW $SLOT_65 $ZERO --rpc-url $RPC > /dev/null
+  cast rpc anvil_setStorageAt $VAULT $SLOT_65 $ZERO --rpc-url $RPC > /dev/null
+  cast rpc anvil_setStorageAt $ADAPTER $SLOT_65 $ZERO --rpc-url $RPC > /dev/null
+  cast rpc anvil_setStorageAt $GAUGE_VOTER $SLOT_FB $ZERO --rpc-url $RPC > /dev/null
+  echo "       All contracts unpaused via storage overrides"
+fi
 
-echo "[3/10] Unpausing contracts (storage overrides)..."
-cast rpc anvil_setStorageAt $ESCROW $SLOT_65 $ZERO --rpc-url $RPC > /dev/null
-cast rpc anvil_setStorageAt $VAULT $SLOT_65 $ZERO --rpc-url $RPC > /dev/null
-cast rpc anvil_setStorageAt $ADAPTER $SLOT_65 $ZERO --rpc-url $RPC > /dev/null
-cast rpc anvil_setStorageAt $GAUGE_VOTER $SLOT_FB $ZERO --rpc-url $RPC > /dev/null
-echo "       All contracts unpaused"
-
-echo "[4/10] Mocking DAO permissions..."
+echo "[3/7] Mocking DAO permissions..."
 cast rpc anvil_setCode $DAO 0x600160005260206000f3 --rpc-url $RPC > /dev/null
 echo "       DAO returns true for all permission checks"
 
-echo "[5/10] Enabling NFT Lock transfers..."
-cast send $NFT_LOCK "enableTransfers()" \
-  --from $ALICE --unlocked --rpc-url $RPC > /dev/null
-echo "       NFT transfers enabled"
-
-echo "[6/10] Funding wallets with KAT..."
+echo "[4/7] Funding wallets with KAT..."
 set_kat_balance() {
   local ADDR=$1
   local HEX_AMOUNT=$2
@@ -87,31 +88,7 @@ echo "       Alice: 100,000 KAT"
 echo "       Bob:   100,000 KAT"
 echo "       Carol:  50,000 KAT"
 
-echo "[7/10] Initializing vault master token..."
-MASTER_ID=$(cast call $VAULT "masterTokenId()(uint256)" --rpc-url $RPC | awk '{print $1}')
-if [ "$MASTER_ID" = "0" ]; then
-  ALICE_BAL_SLOT=$(cast index address $ALICE 0)
-  HEX_101K=0x00000000000000000000000000000000000000000000156338918f10d5200000
-  cast rpc anvil_setStorageAt $KAT "$ALICE_BAL_SLOT" "$HEX_101K" --rpc-url $RPC > /dev/null
-
-  cast send $KAT "approve(address,uint256)" $ESCROW $WEI_1K \
-    --from $ALICE --unlocked --rpc-url $RPC > /dev/null
-  cast send $ESCROW "createLock(uint256)" $WEI_1K \
-    --from $ALICE --unlocked --rpc-url $RPC > /dev/null
-  TOKEN_ID=$(cast call $ESCROW "lastLockId()(uint256)" --rpc-url $RPC | awk '{print $1}')
-
-  cast send $NFT_LOCK "approve(address,uint256)" $VAULT $TOKEN_ID \
-    --from $ALICE --unlocked --rpc-url $RPC > /dev/null
-  cast send $VAULT "initializeMasterTokenAndStrategy(uint256,address)" $TOKEN_ID $STRATEGY \
-    --from $ALICE --unlocked --rpc-url $RPC > /dev/null
-  echo "       Vault initialized with master token #$TOKEN_ID"
-
-  cast rpc anvil_setStorageAt $KAT "$ALICE_BAL_SLOT" "$HEX_100K" --rpc-url $RPC > /dev/null
-else
-  echo "       Vault already initialized (master token #$MASTER_ID)"
-fi
-
-echo "[8/10] Approving escrow as NFT operator..."
+echo "[5/7] Approving escrow as NFT operator..."
 cast send $NFT_LOCK "setApprovalForAll(address,bool)" $ESCROW true \
   --from $ALICE --unlocked --rpc-url $RPC > /dev/null
 cast send $NFT_LOCK "setApprovalForAll(address,bool)" $ESCROW true \
@@ -120,7 +97,7 @@ cast send $NFT_LOCK "setApprovalForAll(address,bool)" $ESCROW true \
   --from $CAROL --unlocked --rpc-url $RPC > /dev/null
 echo "       Escrow approved for Alice, Bob, Carol"
 
-echo "[9/10] Creating test gauges..."
+echo "[6/7] Creating test gauges..."
 GAUGE_ETH_USDC=0x0000000000000000000000000000000000000001
 GAUGE_WBTC_USDC=0x0000000000000000000000000000000000000002
 GAUGE_KAT_ETH=0x0000000000000000000000000000000000000003
@@ -139,7 +116,7 @@ echo "       KAT/ETH   $GAUGE_KAT_ETH"
 # ── Step 10: Warp into voting window + delegate ─────────────
 # The GaugeVoter has epoch-based voting windows. We need to warp
 # past epochVoteStart so that votingActive() returns true.
-echo "[10/10] Warping into voting window + delegating..."
+echo "[7/7] Warping into voting window + delegating..."
 VOTE_START=$(cast call $GAUGE_VOTER "epochVoteStart()(uint256)" --rpc-url $RPC 2>/dev/null | awk '{print $1}')
 if [ -n "$VOTE_START" ] && [ "$VOTE_START" -gt 0 ]; then
   VOTE_TARGET=$((VOTE_START + 3600))

@@ -11,3 +11,5 @@ foundry/.anvil.log
 *.log
 .DS_Store
 .claude/
+.gitmodules
+frontend/tsconfig.tsbuildinfo

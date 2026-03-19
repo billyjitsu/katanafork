@@ -360,6 +360,54 @@ export const gaugeVoterAbi = [
   },
 ] as const;
 
+export const exitQueueAbi = [
+  {
+    type: "function",
+    name: "ticketHolder",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "queue",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [
+      { name: "holder", type: "address" },
+      { name: "createdAt", type: "uint48" },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "canExit",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "cooldown",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "feePercent",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "minFeePercent",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+] as const;
+
 export const ivotesAdapterAbi = [
   {
     type: "function",
