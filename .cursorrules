@@ -1,0 +1,35 @@
+You are working on Katana Fork — a local Anvil fork of Katana Network with a Next.js frontend for testing KAT staking, voting, and vault operations.
+
+## Tech stack
+- Foundry (Solidity 0.8.24) for smart contract tests
+- Next.js 16 + React 19 + TypeScript for frontend
+- wagmi v2 + viem for chain interaction
+- Tailwind CSS v4 with custom ink/katana theme
+
+## Key files
+- `foundry/src/KatanaConfig.sol` — All contract addresses and constants
+- `foundry/test/Base.t.sol` — Test harness (extend KatanaForkTest)
+- `frontend/src/config/abis.ts` — Contract ABIs
+- `frontend/src/config/contracts.ts` — Contract addresses
+- `frontend/src/app/globals.css` — Theme (ink-* dark, katana-* blue accent)
+- `frontend/src/lib/format.ts` — fmtEther() for 4-decimal display
+
+## Rules
+- Use `fmtEther()` for display values, raw `formatEther()` only for input MAX buttons
+- Exit queue params (cooldown, fees) must be read from chain, never hardcoded
+- Use `ink-*` colors for backgrounds/text, `katana-*` for brand accent, `emerald-*` only for success
+- Buttons use rounded-full (pill shape): btn-primary, btn-secondary, btn-danger
+- Forge tests: extend KatanaForkTest, use _advancePastMinLock() before beginWithdrawal
+- After beginWithdrawal, NFT is in escrow — use ExitQueue.queue(tokenId) not ownedTokens()
+- Voting requires self-delegation via IVotesAdapter.delegate(address)
+
+## Chain
+- Katana mainnet RPC: https://rpc.katana.network
+- Local fork: http://127.0.0.1:8545
+- Chain ID: 747474
+
+## Commands
+- `make fork` — Start Anvil fork at latest block
+- `make test` — Run 19 forge tests
+- `make dev` — Start frontend dev server
+- `make warp DAYS=N` — Fast-forward fork time
