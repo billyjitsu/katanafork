@@ -33,7 +33,9 @@ Open [http://localhost:3000](http://localhost:3000) and connect with MetaMask.
 | Currency Symbol | ETH |
 | KAT Token | `0x7F1f4b4b29f5058fA32CC7a97141b8D7e5ABDC2d` |
 
-Import one of the Anvil test wallets:
+**Use your own wallet** — connect any MetaMask wallet and use the built-in Faucet on the Dashboard to give yourself ETH and KAT. No need to import test private keys.
+
+If you prefer pre-funded Anvil wallets, these are available:
 
 | Wallet | Address | Private Key |
 |--------|---------|-------------|
@@ -47,11 +49,11 @@ Import one of the Anvil test wallets:
 
 | Flow | Description |
 |------|-------------|
-| **KAT → vKAT** | Stake KAT into VotingEscrow, get a non-transferable NFT with voting power |
-| **KAT → avKAT** | Deposit KAT into the ERC-4626 vault for auto-compounding |
-| **vKAT → avKAT** | Convert your vKAT NFT into liquid avKAT vault shares |
-| **avKAT → vKAT** | Redeem avKAT back to a vKAT NFT |
-| **vKAT → KAT** | Begin withdrawal (45-day cooldown, 2.5% min fee) or rage quit (25% fee) |
+| **KAT -> vKAT** | Stake KAT into VotingEscrow, get a non-transferable NFT with voting power |
+| **KAT -> avKAT** | Deposit KAT into the ERC-4626 vault for auto-compounding |
+| **vKAT -> avKAT** | Convert your vKAT NFT into liquid avKAT vault shares |
+| **avKAT -> vKAT** | Redeem avKAT back to a vKAT NFT |
+| **vKAT -> KAT** | Begin withdrawal (cooldown + exit fee read dynamically from the Exit Queue contract) |
 | **avKAT exit** | Sell on DEX, or convert to vKAT and unstake |
 
 ### Project Structure
@@ -65,9 +67,10 @@ Import one of the Anvil test wallets:
 │   └── Makefile          # Foundry-specific commands
 └── frontend/             # Next.js 16 + wagmi v2 + RainbowKit + Tailwind v4
     └── src/
-        ├── app/          # Pages + providers
+        ├── app/          # Pages + providers + global styles
         ├── components/   # UI for each flow
-        └── config/       # Chain, contracts, ABIs, wagmi config
+        ├── config/       # Chain, contracts, ABIs, wagmi config
+        └── lib/          # Shared utilities (formatting)
 ```
 
 ### Forge Tests
@@ -77,8 +80,8 @@ Import one of the Anvil test wallets:
 | `01_StakeToVKAT` | createLock, createLockFor, multiple locks |
 | `02_StakeToAvKAT` | deposit, exchange rate, multiple deposits, transferability |
 | `03_VoteOnGauges` | single voter, multiple voters |
-| `04_UnstakeVKAT` | standard (45d), rage quit, early withdrawal, cancel |
-| `05_ConvertVKATToAvKAT` | vKAT→avKAT, avKAT→vKAT |
+| `04_UnstakeVKAT` | standard (60d), rage quit, early withdrawal, cancel |
+| `05_ConvertVKATToAvKAT` | vKAT->avKAT, avKAT->vKAT |
 | `06_FullLifecycle` | active path, passive path, conversion, combined |
 
 ## Commands
@@ -90,9 +93,11 @@ make dev                  # Start frontend dev server
 make test                 # Run Forge tests
 make stop                 # Stop Anvil
 make fund ADDR=0x...      # Fund any address with KAT
-make warp DAYS=45         # Fast-forward time (e.g., skip cooldown)
+make warp DAYS=60         # Fast-forward time (e.g., skip cooldown)
 make balances             # Check test wallet KAT balances
 ```
+
+You can pin to a specific block if needed: `make fork FORK_BLOCK=27185000`
 
 ## Key Contracts
 
@@ -108,16 +113,25 @@ make balances             # Check test wallet KAT balances
 
 ## How the Fork Works
 
-The `make fork` command:
+The `make fork` command starts Anvil forking Katana mainnet at the **latest block** and runs a setup script that adapts to the current on-chain state:
 
-1. Starts Anvil forking Katana mainnet at a specific block
-2. Warps time past KAT's unlock timestamp
-3. Unlocks KAT transfers (calls `unlockAndRenounceUnlocker()`)
-4. Unpauses all contracts via storage overrides
-5. Mocks DAO permissions so admin functions work
-6. Enables NFT Lock transfers
-7. Funds test wallets with 100k KAT each
-8. Initializes the avKAT vault's master token
-9. Creates and activates 3 test gauges for voting
+1. **Checks if KAT is unlocked** — skips time warp and unlock if transfers are already live
+2. **Checks if contracts are unpaused** — skips storage overrides if already unpaused
+3. **Mocks DAO permissions** so test wallets can call admin functions
+4. **Funds test wallets** with 100k KAT each
+5. **Approves escrow** as NFT operator for test wallets
+6. **Creates test gauges** for voting (if not already present)
+7. **Warps into voting window** and delegates votes
 
-This simulates the post-TGE state so you can test all user flows immediately.
+Since KAT is now live and transferable on mainnet, steps 1-2 are automatically skipped. The setup only applies what's still needed for local testing.
+
+## Frontend Features
+
+- **Dashboard** — KAT balance, vKAT NFTs, avKAT shares, voting power, protocol totals (K/M formatting)
+- **Stake/Deposit** — Lock KAT for vKAT or deposit into avKAT vault
+- **Unstake** — Pending withdrawal tracker with live fee estimator, progress bar, and cooldown countdown
+- **Vote** — 35 real mainnet gauges with pool names (e.g., USDC/ETH 5bps), collapsible list, MAX allocation
+- **Convert** — Swap between vKAT NFTs and avKAT shares
+- **Dev tools** — Faucet (ETH + KAT), time warp for cooldown testing
+- **Dynamic params** — Exit queue cooldown, min/max fees, and gauge list all read from the chain at runtime. When the protocol updates these values, the UI adjusts automatically
+- **1-day min lock warning** — Alerts when withdrawal can't begin yet
