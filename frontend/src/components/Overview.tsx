@@ -5,16 +5,21 @@ import {
   useAccount,
   useReadContract,
   useReadContracts,
-  useWriteContract,
-  useWaitForTransactionReceipt,
 } from "wagmi";
 import { formatEther, parseEther } from "viem";
+import { fmtEther } from "@/lib/format";
+
+function formatCompact(wei: bigint): string {
+  const num = Number(formatEther(wei));
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(2) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(2) + "K";
+  return num.toFixed(2);
+}
 import { CONTRACTS } from "@/config/contracts";
 import {
   katAbi,
   votingEscrowAbi,
   avkatVaultAbi,
-  nftLockAbi,
 } from "@/config/abis";
 
 const RPC_URL = "http://127.0.0.1:8545";
@@ -31,7 +36,7 @@ async function rpcCall(method: string, params: unknown[] = []) {
 
 export function Overview() {
   const { address } = useAccount();
-  const [ethAmount, setEthAmount] = useState("100");
+  const [ethAmount, setEthAmount] = useState("10");
   const [katAmount, setKatAmount] = useState("100000");
   const [faucetStatus, setFaucetStatus] = useState("");
 
@@ -122,34 +127,6 @@ export function Overview() {
     }
   };
 
-  const { data: escrowApproved } = useReadContract({
-    address: CONTRACTS.NFT_LOCK,
-    abi: nftLockAbi,
-    functionName: "isApprovedForAll",
-    args: address ? [address, CONTRACTS.VOTING_ESCROW] : undefined,
-    query: { enabled: !!address },
-  });
-
-  const {
-    writeContract: approveEscrow,
-    data: approveEscrowTxHash,
-    isPending: isApprovingEscrow,
-  } = useWriteContract();
-
-  const {
-    isLoading: isApproveEscrowConfirming,
-    isSuccess: isApproveEscrowConfirmed,
-  } = useWaitForTransactionReceipt({ hash: approveEscrowTxHash });
-
-  const handleApproveEscrow = () => {
-    approveEscrow({
-      address: CONTRACTS.NFT_LOCK,
-      abi: nftLockAbi,
-      functionName: "setApprovalForAll",
-      args: [CONTRACTS.VOTING_ESCROW, true],
-    });
-  };
-
   const tokenIds = ownedTokens ?? [];
 
   const { data: tokenDetails } = useReadContracts({
@@ -172,37 +149,37 @@ export function Overview() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-zinc-100">Dashboard Overview</h2>
+      <h2 className="text-2xl font-bold text-ink-100">Dashboard Overview</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card">
-          <p className="text-sm text-zinc-500 mb-1">KAT Balance</p>
-          <p className="text-2xl font-bold text-zinc-100">
-            {katBalance !== undefined ? formatEther(katBalance) : "--"}
+          <p className="text-sm text-ink-400 mb-1">KAT Balance</p>
+          <p className="text-2xl font-bold text-ink-100">
+            {katBalance !== undefined ? fmtEther(katBalance) : "--"}
           </p>
         </div>
         <div className="card">
-          <p className="text-sm text-zinc-500 mb-1">vKAT NFTs</p>
-          <p className="text-2xl font-bold text-zinc-100">
+          <p className="text-sm text-ink-400 mb-1">vKAT NFTs</p>
+          <p className="text-2xl font-bold text-ink-100">
             {tokenIds.length}
           </p>
         </div>
         <div className="card">
-          <p className="text-sm text-zinc-500 mb-1">avKAT Shares</p>
-          <p className="text-2xl font-bold text-zinc-100">
-            {avkatBalance !== undefined ? formatEther(avkatBalance) : "--"}
+          <p className="text-sm text-ink-400 mb-1">avKAT Shares</p>
+          <p className="text-2xl font-bold text-ink-100">
+            {avkatBalance !== undefined ? fmtEther(avkatBalance) : "--"}
           </p>
           {avkatUnderlying !== undefined && avkatUnderlying > 0n && (
-            <p className="text-xs text-zinc-500 mt-1">
-              ~{formatEther(avkatUnderlying)} KAT underlying
+            <p className="text-xs text-ink-400 mt-1">
+              ~{fmtEther(avkatUnderlying)} KAT underlying
             </p>
           )}
         </div>
         <div className="card">
-          <p className="text-sm text-zinc-500 mb-1">Total Voting Power</p>
-          <p className="text-2xl font-bold text-emerald-500">
+          <p className="text-sm text-ink-400 mb-1">Total Voting Power</p>
+          <p className="text-2xl font-bold text-katana-500">
             {totalVotingPower !== undefined
-              ? formatEther(totalVotingPower)
+              ? fmtEther(totalVotingPower)
               : "--"}
           </p>
         </div>
@@ -210,16 +187,16 @@ export function Overview() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="card">
-          <p className="text-sm text-zinc-500 mb-1">Protocol Total Locked</p>
-          <p className="text-xl font-semibold text-zinc-100">
-            {totalLocked !== undefined ? formatEther(totalLocked) : "--"} KAT
+          <p className="text-sm text-ink-400 mb-1">Total vKAT Locked</p>
+          <p className="text-xl font-semibold text-ink-100">
+            {totalLocked !== undefined ? formatCompact(totalLocked) : "--"} KAT
           </p>
         </div>
         <div className="card">
-          <p className="text-sm text-zinc-500 mb-1">Vault Total Assets</p>
-          <p className="text-xl font-semibold text-zinc-100">
+          <p className="text-sm text-ink-400 mb-1">Total avKAT Assets</p>
+          <p className="text-xl font-semibold text-ink-100">
             {vaultTotalAssets !== undefined
-              ? formatEther(vaultTotalAssets)
+              ? formatCompact(vaultTotalAssets)
               : "--"}{" "}
             KAT
           </p>
@@ -227,8 +204,8 @@ export function Overview() {
       </div>
 
       <div className="card space-y-4">
-        <h3 className="text-lg font-semibold text-zinc-200">Faucet (Dev)</h3>
-        <p className="text-xs text-zinc-500">
+        <h3 className="text-lg font-semibold text-ink-200">Faucet (Dev)</h3>
+        <p className="text-xs text-ink-400">
           Set your connected wallet&apos;s ETH or KAT balance on the local fork.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -265,60 +242,27 @@ export function Overview() {
           <p className="text-xs text-emerald-400">{faucetStatus}</p>
         )}
 
-        <div className="border-t border-zinc-800 pt-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-zinc-200">
-                Escrow NFT Approval
-              </p>
-              <p className="text-xs text-zinc-500">
-                Required for unstaking vKAT. Allows the escrow to transfer your
-                NFT during withdrawal.
-              </p>
-            </div>
-            {escrowApproved ? (
-              <span className="text-xs text-emerald-400 font-medium px-3 py-1 bg-emerald-900/30 rounded-lg">
-                Approved
-              </span>
-            ) : (
-              <button
-                onClick={handleApproveEscrow}
-                disabled={isApprovingEscrow || isApproveEscrowConfirming}
-                className="btn-primary text-sm px-4"
-              >
-                {isApprovingEscrow
-                  ? "Confirm..."
-                  : isApproveEscrowConfirming
-                  ? "Approving..."
-                  : "Approve"}
-              </button>
-            )}
-          </div>
-          {isApproveEscrowConfirmed && !escrowApproved && (
-            <p className="text-xs text-emerald-400">Escrow approved!</p>
-          )}
-        </div>
       </div>
 
       {tokenIds.length > 0 && (
         <div className="card">
-          <h3 className="text-lg font-semibold text-zinc-200 mb-4">
+          <h3 className="text-lg font-semibold text-ink-200 mb-4">
             Your vKAT NFTs
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-zinc-800">
-                  <th className="pb-3 text-sm font-medium text-zinc-500">
+                <tr className="border-b border-ink-700/30">
+                  <th className="pb-3 text-sm font-medium text-ink-400">
                     Token ID
                   </th>
-                  <th className="pb-3 text-sm font-medium text-zinc-500">
+                  <th className="pb-3 text-sm font-medium text-ink-400">
                     Locked Amount
                   </th>
-                  <th className="pb-3 text-sm font-medium text-zinc-500">
+                  <th className="pb-3 text-sm font-medium text-ink-400">
                     Lock Start
                   </th>
-                  <th className="pb-3 text-sm font-medium text-zinc-500">
+                  <th className="pb-3 text-sm font-medium text-ink-400">
                     Voting Power
                   </th>
                 </tr>
@@ -339,23 +283,23 @@ export function Overview() {
                   return (
                     <tr
                       key={tokenId.toString()}
-                      className="border-b border-zinc-800/50"
+                      className="border-b border-ink-700/30"
                     >
-                      <td className="py-3 text-zinc-200 font-mono">
+                      <td className="py-3 text-ink-200 font-mono">
                         #{tokenId.toString()}
                       </td>
-                      <td className="py-3 text-zinc-300">
-                        {locked ? formatEther(locked[0]) : "--"} KAT
+                      <td className="py-3 text-ink-300">
+                        {locked ? fmtEther(locked[0]) : "--"} KAT
                       </td>
-                      <td className="py-3 text-zinc-400 text-sm">
+                      <td className="py-3 text-ink-400 text-sm">
                         {locked
                           ? new Date(
                               Number(locked[1]) * 1000
                             ).toLocaleDateString()
                           : "--"}
                       </td>
-                      <td className="py-3 text-emerald-400">
-                        {vp !== null ? formatEther(vp) : "--"}
+                      <td className="py-3 text-katana-400">
+                        {vp !== null ? fmtEther(vp) : "--"}
                       </td>
                     </tr>
                   );

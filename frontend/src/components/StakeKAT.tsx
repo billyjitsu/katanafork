@@ -8,8 +8,10 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { parseEther, formatEther } from "viem";
+import { fmtEther } from "@/lib/format";
 import { CONTRACTS } from "@/config/contracts";
 import { katAbi, votingEscrowAbi } from "@/config/abis";
+import { TxError } from "./TxError";
 
 export function StakeKAT() {
   const { address } = useAccount();
@@ -35,6 +37,7 @@ export function StakeKAT() {
     writeContract: approve,
     data: approveTxHash,
     isPending: isApproving,
+    error: approveError,
     reset: resetApprove,
   } = useWriteContract();
 
@@ -45,6 +48,7 @@ export function StakeKAT() {
     writeContract: createLock,
     data: lockTxHash,
     isPending: isLocking,
+    error: lockError,
     reset: resetLock,
   } = useWriteContract();
 
@@ -89,8 +93,8 @@ export function StakeKAT() {
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
-      <h2 className="text-2xl font-bold text-zinc-100">Stake KAT to vKAT</h2>
-      <p className="text-zinc-400">
+      <h2 className="text-2xl font-bold text-ink-100">Stake KAT to vKAT</h2>
+      <p className="text-ink-400">
         Lock your KAT tokens to receive a vKAT NFT with voting power.
       </p>
 
@@ -109,16 +113,19 @@ export function StakeKAT() {
               onClick={() =>
                 katBalance && setAmount(formatEther(katBalance))
               }
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-500 hover:text-emerald-400 font-medium"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-katana-500 hover:text-katana-400 font-medium"
             >
               MAX
             </button>
           </div>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-ink-400 mt-1">
             Balance:{" "}
-            {katBalance !== undefined ? formatEther(katBalance) : "--"} KAT
+            {katBalance !== undefined ? fmtEther(katBalance) : "--"} KAT
           </p>
         </div>
+
+        <TxError error={approveError} />
+        <TxError error={lockError} />
 
         {needsApproval ? (
           <button
@@ -151,7 +158,7 @@ export function StakeKAT() {
             <p className="text-emerald-400 font-medium">
               Lock created successfully!
             </p>
-            <p className="text-sm text-zinc-400 mt-1">
+            <p className="text-sm text-ink-400 mt-1">
               Transaction: {lockTxHash?.slice(0, 10)}...{lockTxHash?.slice(-8)}
             </p>
             <button

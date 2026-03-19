@@ -36,8 +36,7 @@ abstract contract KatanaForkTest is Test {
 
     function setUp() public virtual {
         forkId = vm.createSelectFork(
-            KatanaConfig.RPC_URL,
-            KatanaConfig.LATEST_BLOCK
+            KatanaConfig.RPC_URL
         );
 
         kat = IKAT(KatanaConfig.KAT);
@@ -66,12 +65,12 @@ abstract contract KatanaForkTest is Test {
     }
 
     function _simulateUnlock() internal {
-        uint256 unlockTime = kat.unlockTime();
-        if (block.timestamp < unlockTime) {
-            vm.warp(unlockTime + 1);
-        }
-
-        if (kat.locked()) {
+        // Only warp time if KAT is still locked (not yet unlocked early)
+        if (!kat.isUnlocked()) {
+            uint256 unlockTime = kat.unlockTime();
+            if (block.timestamp < unlockTime) {
+                vm.warp(unlockTime + 1);
+            }
             vm.prank(UNLOCKER_ADDR);
             kat.unlockAndRenounceUnlocker();
         }
@@ -135,6 +134,12 @@ abstract contract KatanaForkTest is Test {
     function _advanceBlock() internal {
         vm.roll(block.number + 1);
         vm.warp(block.timestamp + 2);
+    }
+
+    /// @dev Advance past the 1-day minimum lock period required before beginWithdrawal
+    function _advancePastMinLock() internal {
+        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1 days + 1);
     }
 
     function _dealKAT(address to, uint256 amount) internal {

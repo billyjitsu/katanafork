@@ -1,6 +1,6 @@
 SHELL := bash
 
-FORK_BLOCK ?= 25217547
+FORK_BLOCK ?= latest
 FORK_RPC   ?= https://rpc.katana.network
 CHAIN_ID   := 747474
 ANVIL_PORT ?= 8545
@@ -11,11 +11,13 @@ LOG_FILE := .anvil.log
 
 .PHONY: fork anvil setup stop fund warp time gauge gauges test balances help
 
+FORK_BLOCK_FLAG := $(if $(filter latest,$(FORK_BLOCK)),,--fork-block-number $(FORK_BLOCK))
+
 fork: stop
-	@echo "Starting Anvil fork at block $(FORK_BLOCK)..."
+	@echo "Starting Anvil fork ($(FORK_BLOCK))..."
 	@anvil \
 		--fork-url $(FORK_RPC) \
-		--fork-block-number $(FORK_BLOCK) \
+		$(FORK_BLOCK_FLAG) \
 		--chain-id $(CHAIN_ID) \
 		--port $(ANVIL_PORT) \
 		--auto-impersonate \
@@ -28,7 +30,7 @@ fork: stop
 anvil:
 	anvil \
 		--fork-url $(FORK_RPC) \
-		--fork-block-number $(FORK_BLOCK) \
+		$(FORK_BLOCK_FLAG) \
 		--chain-id $(CHAIN_ID) \
 		--port $(ANVIL_PORT) \
 		--auto-impersonate
