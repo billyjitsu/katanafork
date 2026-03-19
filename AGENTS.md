@@ -81,6 +81,9 @@ make fund ADDR=0x...  # Give any address KAT tokens
 2. Extend `KatanaForkTest` from `Base.t.sol` for latest-block tests
 3. Use `_dealKAT(address, amount)` to fund, `_advancePastMinLock()` to skip min lock
 
+### Merge
+`VotingEscrow.merge(from, to)` — burns source NFT, adds KAT to destination. No NFT approval needed. Works across epochs, while voting. Source cannot be in exit queue.
+
 ### Exit queue parameters
 Read dynamically from chain — never hardcode:
 - `ExitQueue.cooldown()` — cooldown period in seconds
@@ -106,3 +109,4 @@ Use `fmtEther()` from `frontend/src/lib/format.ts` for display (4 decimal max). 
 - Voting requires self-delegation first: `IVotesAdapter.delegate(yourAddress)`
 - `votingActive()` is epoch-based — fork may need time warp to reach a voting window
 - DAO is mocked on fork (always returns true) — don't test permissions against it
+- Merge does NOT need NFT Lock approval — only withdrawal does

@@ -229,7 +229,11 @@ export function UnstakeVKAT() {
     useWaitForTransactionReceipt({ hash: approveTxHash });
 
   useEffect(() => {
-    if (isApproveConfirmed) refetchApproval();
+    if (isApproveConfirmed) {
+      // Small delay to let the fork's state settle before re-reading
+      const timer = setTimeout(() => refetchApproval(), 500);
+      return () => clearTimeout(timer);
+    }
   }, [isApproveConfirmed, refetchApproval]);
 
   // ─── Begin withdrawal ─────────────────────────────────
@@ -367,7 +371,7 @@ export function UnstakeVKAT() {
   };
 
   // ─── Derived state for selected token ─────────────────
-  const needsNftApproval = isNftApproved === false;
+  const needsNftApproval = isNftApproved === false && !isApproveConfirmed;
   const selectedIndex = tokenIds.findIndex(
     (id) => id.toString() === selectedTokenId
   );
@@ -626,23 +630,32 @@ export function UnstakeVKAT() {
               : "Approve vKAT NFT"}
           </button>
         ) : (
-          <button
-            onClick={handleBeginWithdrawal}
-            disabled={
-              isBeginPending ||
-              isBeginConfirming ||
-              !selectedTokenId ||
-              !!selectedIsVoting ||
-              minLockReady === false
-            }
-            className="btn-primary w-full"
-          >
-            {isBeginPending
-              ? "Confirm in Wallet..."
-              : isBeginConfirming
-              ? "Processing..."
-              : "Begin Withdrawal"}
-          </button>
+          <>
+            <button
+              onClick={handleBeginWithdrawal}
+              disabled={
+                isBeginPending ||
+                isBeginConfirming ||
+                !selectedTokenId ||
+                !!selectedIsVoting ||
+                minLockReady === false
+              }
+              className="btn-primary w-full"
+            >
+              {isBeginPending
+                ? "Confirm in Wallet..."
+                : isBeginConfirming
+                ? "Processing..."
+                : minLockReady === false
+                ? "Min Lock Not Met"
+                : "Begin Withdrawal"}
+            </button>
+            {minLockReady === false && selectedTokenId && (
+              <p className="text-xs text-amber-500 text-center">
+                1-day minimum lock required. Use Fast-Forward below to warp 1 day, then refresh.
+              </p>
+            )}
+          </>
         )}
       </div>
 

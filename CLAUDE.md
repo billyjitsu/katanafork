@@ -46,8 +46,19 @@ KAT --stake--> vKAT (NFT, voting power, non-transferable)
 KAT --deposit--> avKAT (ERC-20, liquid, auto-compounding)
 vKAT --deposit--> avKAT (convert active to passive)
 avKAT --withdraw--> vKAT (convert passive to active)
+vKAT + vKAT --merge--> vKAT (combine NFTs, source burns)
 vKAT --beginWithdrawal + withdraw--> KAT (cooldown + exit fee)
 ```
+
+## Merge Mechanics
+
+`VotingEscrow.merge(uint256 from, uint256 to)` combines two vKAT NFTs:
+- Source NFT is burned, its KAT added to destination
+- Destination keeps its original `lock.start` timestamp
+- Works across different epochs/creation times
+- Works while NFTs are actively voting
+- Does NOT require NFT Lock approval
+- Reverts if: same NFT (`SameNFT`), non-owner (`NotApprovedOrOwner`), source in exit queue (`NotSameOwner`)
 
 ## Exit Queue Mechanics
 
@@ -87,6 +98,7 @@ All components in `frontend/src/components/`:
 - `StakeKAT.tsx` — KAT -> vKAT staking
 - `DepositAvKAT.tsx` — KAT -> avKAT vault deposit
 - `ConvertTokens.tsx` — vKAT <-> avKAT conversion (both directions)
+- `MergeVKAT.tsx` — Combine multiple vKAT NFTs into one
 - `UnstakeVKAT.tsx` — Withdrawal with pending tracker, fee estimator, time warp
 - `VoteOnGauges.tsx` — Gauge voting with 35 real mainnet gauges
 
@@ -111,3 +123,4 @@ Gauge names are stored on-chain as IPFS URIs in the `gauges(address)` mapping (r
 - Voting requires delegation to self first via `IVotesAdapter.delegate(address)`
 - `votingActive()` is epoch-based — may need time warp to enter a voting window
 - The DAO is mocked on fork (`anvil_setCode` to always return true) — don't test permission logic against it
+- Merge does NOT require NFT Lock approval — only withdrawal does
