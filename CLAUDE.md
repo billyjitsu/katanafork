@@ -47,6 +47,7 @@ KAT --deposit--> avKAT (ERC-20, liquid, auto-compounding)
 vKAT --deposit--> avKAT (convert active to passive)
 avKAT --withdraw--> vKAT (convert passive to active)
 vKAT + vKAT --merge--> vKAT (combine NFTs, source burns)
+vKAT --split--> vKAT + vKAT (split into two, both >= minDeposit)
 vKAT --beginWithdrawal + withdraw--> KAT (cooldown + exit fee)
 ```
 
@@ -59,6 +60,16 @@ vKAT --beginWithdrawal + withdraw--> KAT (cooldown + exit fee)
 - Works while NFTs are actively voting
 - Does NOT require NFT Lock approval
 - Reverts if: same NFT (`SameNFT`), non-owner (`NotApprovedOrOwner`), source in exit queue (`NotSameOwner`)
+
+## Split Mechanics
+
+`VotingEscrow.split(uint256 from, uint256 value)` splits a vKAT NFT into two:
+- Original NFT keeps `locked - value`, new NFT gets `value`
+- Both must have >= `minDeposit()` (currently 0.5 KAT)
+- New NFT inherits the same `lock.start` timestamp
+- Works while voting
+- Cannot split NFTs in the exit queue
+- Reverts if: amount too big (`SplitAmountTooBig`), below min (`AmountTooSmall`), non-owner (`NotApprovedOrOwner`)
 
 ## Exit Queue Mechanics
 
@@ -98,7 +109,7 @@ All components in `frontend/src/components/`:
 - `StakeKAT.tsx` — KAT -> vKAT staking
 - `DepositAvKAT.tsx` — KAT -> avKAT vault deposit
 - `ConvertTokens.tsx` — vKAT <-> avKAT conversion (both directions)
-- `MergeVKAT.tsx` — Combine multiple vKAT NFTs into one
+- `MergeVKAT.tsx` — Merge and split vKAT NFTs
 - `UnstakeVKAT.tsx` — Withdrawal with pending tracker, fee estimator, time warp
 - `VoteOnGauges.tsx` — Gauge voting with 35 real mainnet gauges
 

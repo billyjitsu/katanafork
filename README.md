@@ -54,6 +54,7 @@ If you prefer pre-funded Anvil wallets, these are available:
 | **vKAT -> avKAT** | Convert your vKAT NFT into liquid avKAT vault shares |
 | **avKAT -> vKAT** | Redeem avKAT back to a vKAT NFT |
 | **vKAT + vKAT** | Merge two vKAT NFTs into one (source burns, destination keeps its lock start) |
+| **vKAT -> vKAT + vKAT** | Split a vKAT NFT into two (both must have >= minDeposit) |
 | **vKAT -> KAT** | Begin withdrawal (cooldown + exit fee read dynamically from the Exit Queue contract) |
 | **avKAT exit** | Sell on DEX, or convert to vKAT and unstake |
 
@@ -133,7 +134,7 @@ Since KAT is now live and transferable on mainnet, steps 1-2 are automatically s
 - **Unstake** — Pending withdrawal tracker with live fee estimator, progress bar, and cooldown countdown
 - **Vote** — 35 real mainnet gauges with pool names (e.g., USDC/ETH 5bps), collapsible list, MAX allocation
 - **Convert** — Swap between vKAT NFTs and avKAT shares
-- **Merge** — Combine multiple vKAT NFTs into one (works across epochs, while voting, no approval needed)
+- **Merge / Split** — Combine vKAT NFTs or split one into two (works across epochs, while voting)
 - **Dev tools** — Faucet (ETH + KAT), time warp for cooldown testing
 - **Dynamic params** — Exit queue cooldown, min/max fees, and gauge list all read from the chain at runtime. When the protocol updates these values, the UI adjusts automatically
 - **1-day min lock warning** — Alerts when withdrawal can't begin yet

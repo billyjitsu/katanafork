@@ -17,7 +17,7 @@ const tabs = [
   { id: "stake", label: "vKAT" },
   { id: "vault", label: "avKAT" },
   { id: "convert", label: "Convert" },
-  { id: "merge", label: "Merge" },
+  { id: "merge", label: "Merge / Split" },
   { id: "unstake", label: "Unstake" },
   { id: "vote", label: "Vote" },
 ] as const;

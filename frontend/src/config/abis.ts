@@ -148,6 +148,23 @@ export const votingEscrowAbi = [
   },
   {
     type: "function",
+    name: "split",
+    inputs: [
+      { name: "from", type: "uint256" },
+      { name: "value", type: "uint256" },
+    ],
+    outputs: [{ name: "tokenId", type: "uint256" }],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "minDeposit",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "lastLockId",
     inputs: [],
     outputs: [{ name: "", type: "uint256" }],

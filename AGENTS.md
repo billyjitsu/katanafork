@@ -81,8 +81,9 @@ make fund ADDR=0x...  # Give any address KAT tokens
 2. Extend `KatanaForkTest` from `Base.t.sol` for latest-block tests
 3. Use `_dealKAT(address, amount)` to fund, `_advancePastMinLock()` to skip min lock
 
-### Merge
-`VotingEscrow.merge(from, to)` — burns source NFT, adds KAT to destination. No NFT approval needed. Works across epochs, while voting. Source cannot be in exit queue.
+### Merge & Split
+- `VotingEscrow.merge(from, to)` — burns source NFT, adds KAT to destination. No approval needed. Works across epochs, while voting. Source cannot be in exit queue.
+- `VotingEscrow.split(from, value)` — splits NFT into two. Both must have >= `minDeposit()` (0.5 KAT). New NFT inherits lock start. Cannot split NFTs in exit queue.
 
 ### Exit queue parameters
 Read dynamically from chain — never hardcode:

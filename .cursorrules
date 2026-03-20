@@ -23,6 +23,7 @@ You are working on Katana Fork — a local Anvil fork of Katana Network with a N
 - After beginWithdrawal, NFT is in escrow — use ExitQueue.queue(tokenId) not ownedTokens()
 - Voting requires self-delegation via IVotesAdapter.delegate(address)
 - Merge (VotingEscrow.merge) does NOT need NFT approval — works across epochs, while voting
+- Split (VotingEscrow.split) — both resulting NFTs must have >= minDeposit (0.5 KAT)
 
 ## Chain
 - Katana mainnet RPC: https://rpc.katana.network

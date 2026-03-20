@@ -27,3 +27,4 @@ This is a local Anvil fork testing environment for the KAT ecosystem on Katana N
 - Gauge voting needs self-delegation first: `IVotesAdapter.delegate(yourAddress)`
 - DAO is mocked on fork (always returns true) — not suitable for permission testing
 - `merge(from, to)` does NOT need NFT approval — works across epochs, while voting. Source can't be in exit queue
+- `split(from, value)` — both resulting NFTs must have >= minDeposit (0.5 KAT). Can't split NFTs in exit queue
